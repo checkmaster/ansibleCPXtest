@@ -1,0 +1,35 @@
+---
+- hosts: "localhost"
+  vars_files:
+  - vars.yml
+
+  tasks:
+  - name: "login"
+    check_point_mgmt:
+      command: login
+      parameters:
+        username: "{{mgmt_user}}"
+        password: "{{mgmt_password}}"
+        management: "{{mgmt_server}}"
+      fingerprint: "{{mgmt_fingerprint}}"
+    register: login_response
+    
+  - name: "add-host-sequence"
+    check_point_mgmt:
+      command: add-host
+      parameters:
+        name: "cpx-host{{item}}"
+        ip-address: "192.0.2.{{item}}"
+        color: "blue"
+      session-data: "{{login_response}}"
+    with_sequence: start=1 end=25
+
+  - name: "publish"
+    check_point_mgmt:
+      command: publish
+      session-data: "{{login_response}}"
+
+  - name: "logout"
+    check_point_mgmt:
+      command: logout 
+      session-data: "{{login_response}}"

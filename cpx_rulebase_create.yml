@@ -1,0 +1,128 @@
+---
+- hosts: "localhost"
+  vars_files:
+  - vars.yml
+
+  tasks:
+  - name: "login"
+    check_point_mgmt:
+      command: login
+      parameters:
+        username: "{{mgmt_user}}"
+        password: "{{mgmt_password}}"
+        management: "{{mgmt_server}}"
+      fingerprint: "{{mgmt_fingerprint}}"
+    register: login_response
+    
+  - name: "create-new-policy-package"
+    check_point_mgmt:
+      command: add-package
+      parameters:
+        name: "CPX_Demo_Policy"
+        comments: "Created by ansible during CPX demo"
+        color: "green"
+        threat-prevention: "false"
+        access: "true"
+      session-data: "{{login_response}}"
+      
+  - name: "add-internal-nets-group"
+    check_point_mgmt:
+      command: add-group
+      parameters:
+        name: "openstack_nets"
+      session-data: "{{login_response}}"
+
+  - name: "add-network-192.168.200.0"    
+    check_point_mgmt:
+      command: add-network
+      parameters:
+        name: "net-192.168.200.0-24"
+        subnet: "192.168.200.0"
+        subnet-mask: "255.255.255.0" 
+        groups: "openstack_nets"
+      session-data: "{{login_response}}"
+
+  - name: "add-network-192.168.201.0"    
+    check_point_mgmt:
+      command: add-network
+      parameters:
+        name: "net-192.168.201.0-24"
+        subnet: "192.168.201.0"
+        subnet-mask: "255.255.255.0" 
+        groups: "openstack_nets"
+      session-data: "{{login_response}}"
+      
+  - name: "add-network-192.168.202.0"    
+    check_point_mgmt:
+      command: add-network
+      parameters:
+        name: "net-192.168.202.0-24"
+        subnet: "192.168.202.0"
+        subnet-mask: "255.255.255.0" 
+        groups: "openstack_nets"
+      session-data: "{{login_response}}"
+
+  - name: "add access section default drop"
+    check_point_mgmt:
+      command: add-access-section
+      parameters:
+        layer: "CPX_Demo_Policy Network"
+        name: "default drop"
+        position: "top"
+      session-data: "{{login_response}}"
+
+  - name: "add access section openstack rules"
+    check_point_mgmt:
+      command: add-access-section
+      parameters:
+        layer: "CPX_Demo_Policy Network"
+        name: "openstack rules"
+        position: "top"
+      session-data: "{{login_response}}"
+
+
+  - name: "add access rule from any to openstack networks"
+    check_point_mgmt:
+      command: add-access-rule
+      parameters:
+        layer: "CPX_Demo_Policy Network"
+        name: "created by ansible playbook"
+        position:
+          top: "openstack rules"
+        source:
+          - "any"
+        destination:
+          - "openstack_nets"
+        service:
+          - "any"
+        action: "accept"
+        track: "log"
+      session-data: "{{login_response}}"
+
+  - name: "add access rule from openstack networks to any"
+    check_point_mgmt:
+      command: add-access-rule
+      parameters:
+        layer: "CPX_Demo_Policy Network"
+        name: "created by ansible playbook"
+        position:
+          top: "openstack rules"
+        source:
+          - "openstack_nets"
+        destination:
+          - "any"
+        service:
+          - "any"
+        action: "accept"
+        track: "log"
+      session-data: "{{login_response}}"
+            
+  - name: "publish"
+    check_point_mgmt:
+      command: publish
+      session-data: "{{login_response}}"
+
+  - name: "logout"
+    check_point_mgmt:
+      command: logout 
+      session-data: "{{login_response}}"

@@ -1,0 +1,60 @@
+---
+- hosts: "localhost"
+  vars_files:
+  - vars.yml
+
+  tasks:
+  - name: "login"
+    check_point_mgmt:
+      command: login
+      parameters:
+        username: "{{mgmt_user}}"
+        password: "{{mgmt_password}}"
+        management: "{{mgmt_server}}"
+      fingerprint: "{{mgmt_fingerprint}}"
+    register: login_response
+    
+  - name: "delete-policy-package"
+    check_point_mgmt:
+      command: delete-package
+      parameters:
+        name: "CPX_Demo_Policy"
+      session-data: "{{login_response}}"
+      
+  - name: "delete-internal-nets-group"
+    check_point_mgmt:
+      command: delete-group
+      parameters:
+        name: "openstack_nets"
+      session-data: "{{login_response}}"
+
+  - name: "delete-network-192.168.200.0"    
+    check_point_mgmt:
+      command: delete-network
+      parameters:
+        name: "net-192.168.200.0-24"
+      session-data: "{{login_response}}"
+
+  - name: "delete-network-192.168.201.0"    
+    check_point_mgmt:
+      command: delete-network
+      parameters:
+        name: "net-192.168.201.0-24"
+      session-data: "{{login_response}}"
+      
+  - name: "delete-network-192.168.202.0"    
+    check_point_mgmt:
+      command: delete-network
+      parameters:
+        name: "net-192.168.202.0-24"
+      session-data: "{{login_response}}"
+
+  - name: "publish"
+    check_point_mgmt:
+      command: publish
+      session-data: "{{login_response}}"
+
+  - name: "logout"
+    check_point_mgmt:
+      command: logout 
+      session-data: "{{login_response}}"

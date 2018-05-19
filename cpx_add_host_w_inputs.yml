@@ -1,0 +1,33 @@
+---
+- hosts: "localhost"
+  vars_files:
+  - vars.yml
+
+  tasks:
+  - name: "login"
+    check_point_mgmt:
+      command: login
+      parameters:
+        username: "{{mgmt_user}}"
+        password: "{{mgmt_password}}"
+        management: "{{mgmt_server}}"
+      fingerprint: "{{mgmt_fingerprint}}"
+    register: login_response
+    
+  - name: "add-host-{{host}}"    
+    check_point_mgmt:
+      command: add-host
+      parameters:
+        name: "{{host}}"
+        ip-address: "{{ip}}"
+      session-data: "{{login_response}}"
+
+  - name: "publish"
+    check_point_mgmt:
+      command: publish
+      session-data: "{{login_response}}"
+
+  - name: "logout"
+    check_point_mgmt:
+      command: logout 
+      session-data: "{{login_response}}"
