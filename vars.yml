@@ -1,6 +1,6 @@
 ---
 # Adjust vars as needed
-mgmt_user: ansible
+mgmt_user: api_user
 mgmt_password: Cpwins1!
 mgmt_server: 
 mgmt_fingerprint: 
